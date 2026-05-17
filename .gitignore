@@ -137,3 +137,14 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Test samples (PLY files are large)
+test-samples/
+
+# Personal notes
+노트/
+
+# Large data files
+*.ply
+*.splat
+public/data/
