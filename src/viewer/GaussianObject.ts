@@ -49,8 +49,21 @@ export class GaussianObject
         const material = new THREE.ShaderMaterial({
             vertexShader,
             fragmentShader,
-            vertexColors: true
+            vertexColors: true,
+            transparent: true,
+            depthWrite: false,
+            depthTest: false,
+            blending: THREE.NormalBlending,
+            uniforms: {
+                viewport: {
+                    value: new THREE.Vector2(window.innerWidth, window.innerHeight)
+                }
+            }
+            
         })
+
+        // debug code
+        //console.log(data.scales[0], data.scales[1], data.scales[2])
         
         geometry.setAttribute(
             "position",
@@ -93,6 +106,36 @@ export class GaussianObject
             geometry,
             material
         )
+    }
+
+    sortedByDepth(camera: THREE.Camera)
+    {
+        const geometry = this.points.geometry
+        const position = geometry.getAttribute("position")
+        const count = position.count
+        
+        camera.updateMatrixWorld()
+        this.points.updateMatrixWorld()
+        const modelView = new THREE.Matrix4().multiplyMatrices(
+            camera.matrixWorldInverse,
+            this.points.matrixWorld
+        )
+
+        const depths = new Float32Array(count)
+        const p = new THREE.Vector3()
+
+
+        for(let i=0; i < count; i++)
+        {   
+            p.set(position.getX(i), position.getY(i), position.getZ(i))
+            p.applyMatrix4(modelView)
+            depths[i] = p.z
+        }
+
+        const order = Array.from({length: count}, (_, i) => i)
+        order.sort((a, b) => depths[b] - depths[a])
+        
+        geometry.setIndex(order)
     }
 }
 

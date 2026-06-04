@@ -34,10 +34,11 @@ export default function Viewer({data} : ViewerProps)
         
         // scene
         const gaussianObject = new GaussianObject(data)
+        gaussianObject.sortedByDepth(camera)
         scene.add(gaussianObject.points)
 
         // camera
-        camera.position.z = 3
+        camera.position.z = 7
 
         // render
         renderer.render(scene, camera)
