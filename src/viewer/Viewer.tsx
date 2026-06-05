@@ -29,16 +29,24 @@ export default function Viewer({data} : ViewerProps)
             return
         }
         containerRef.current.appendChild(renderer.domElement)
+        renderer.setPixelRatio(window.devicePixelRatio)
         renderer.setSize(containerRef.current.clientWidth,containerRef.current.clientHeight)
-        //renderer.setSize(window.innerWidth, window.innerHeight)
+        
         
         // scene
         const gaussianObject = new GaussianObject(data)
-        gaussianObject.sortedByDepth(camera)
+        // viewport 유니폼을 실제 드로잉 버퍼 크기(= clientSize × pixelRatio)로 맞춤
+        const drawBuffer = renderer.getDrawingBufferSize(new THREE.Vector2())
+        ;(gaussianObject.points.material as THREE.ShaderMaterial).uniforms.viewport.value.copy(drawBuffer)
+        //gaussianObject.sortedByDepth(camera)
         scene.add(gaussianObject.points)
 
         // camera
+        camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight
+        camera.updateProjectionMatrix()
         camera.position.z = 7
+
+        gaussianObject.sortedByDepth(camera)
 
         // render
         renderer.render(scene, camera)

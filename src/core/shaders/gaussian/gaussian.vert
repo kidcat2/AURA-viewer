@@ -51,6 +51,7 @@ void main()
     mat3 W = mat3(modelViewMatrix); // translation 제외, rot-scale만 추출
 
     mat2 cov_2d = J * W * cov_3d * transpose(W) * transpose(J);
+    cov_2d += mat2(0.3);
 
     // // Gaussian Bounding box
     float det = determinant(cov_2d);
@@ -72,6 +73,6 @@ void main()
 
     // Gaussian Center projection
     gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-    gl_Position.y *= -1.0;
+    //gl_Position.y *= -1.0;
     gl_PointSize = vPointSize;
 }

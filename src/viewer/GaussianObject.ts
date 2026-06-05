@@ -64,7 +64,6 @@ export class GaussianObject
 
         // debug code
         //console.log(data.scales[0], data.scales[1], data.scales[2])
-        
         geometry.setAttribute(
             "position",
             new THREE.BufferAttribute(data.positions, 3),
@@ -106,6 +105,8 @@ export class GaussianObject
             geometry,
             material
         )
+
+        this.points.rotation.x = Math.PI 
     }
 
     sortedByDepth(camera: THREE.Camera)
@@ -133,7 +134,7 @@ export class GaussianObject
         }
 
         const order = Array.from({length: count}, (_, i) => i)
-        order.sort((a, b) => depths[b] - depths[a])
+        order.sort((a, b) => depths[a] - depths[b])
         
         geometry.setIndex(order)
     }
