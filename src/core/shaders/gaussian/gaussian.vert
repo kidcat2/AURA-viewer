@@ -134,7 +134,7 @@ void main()
         dirColor.b += b[i] * sh[i + 30];
     }
 
-    //vColor += dirColor;
+    vColor += dirColor;
     vColor = clamp(vColor, 0.0, 1.0);
 
 
