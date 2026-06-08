@@ -1,13 +1,16 @@
-varying float vOpacity;
-varying mat2 vInvCov;
-varying vec3 vColor;
-varying float vPointSize;
+out float vOpacity;
+out mat2 vInvCov;
+out vec3 vColor;
+out float vPointSize;
 
-attribute float opacity;
-attribute vec3 scale;
-attribute vec4 rotation;
+in float opacity;
+in vec3 scale;
+in vec4 rotation;
 
 uniform vec2 viewport;
+uniform sampler2D shTexture;
+uniform int shWidth;
+uniform int shTexels;
 
 void main()
 {
@@ -59,14 +62,83 @@ void main()
     float eigen_value = mid + sqrt(max(mid*mid - det, 0.0));
     float radius = 3.0 * sqrt(eigen_value);
     
-    // color 
+    // color f-dc
     const float C0 = 0.2820947917738781;
     vColor = C0 * color + 0.5;
+
+    // color f-rest
+    int base = gl_VertexID * shTexels;
+
+    float sh[45];
+    for (int i = 0; i < shTexels; i++)
+    {
+        int L = base + i;
+        int x = L % shWidth;
+        int y = L / shWidth;
+
+        vec4 texel = texelFetch(shTexture, ivec2(x, y), 0);
+        
+        int o = i * 4;
+        if(o + 0 < 45) sh[o + 0] = texel.r;
+        if(o + 1 < 45) sh[o + 1] = texel.g;
+        if(o + 2 < 45) sh[o + 2] = texel.b;
+        if(o + 3 < 45) sh[o + 3] = texel.a;
+    }
+
+    // color final  
+    const float C1   =  0.4886025119029199;
+    const float C2_0 =  1.0925484305920792;
+    const float C2_1 = -1.0925484305920792;
+    const float C2_2 =  0.31539156525252005;
+    const float C2_3 = -1.0925484305920792;
+    const float C2_4 =  0.5462742152960396;
+    const float C3_0 = -0.5900435899266435;
+    const float C3_1 =  2.890611442640554;
+    const float C3_2 = -0.4570457994644658;
+    const float C3_3 =  0.3731763325901154;
+    const float C3_4 = -0.4570457994644658;
+    const float C3_5 =  1.445305721320277;
+    const float C3_6 = -0.5900435899266435;
+
+    /// direct
+    vec3 camLocal = (inverse(modelMatrix) * vec4(cameraPosition, 1.0)).xyz;
+    vec3 dir = normalize(position - camLocal);
+
+    float dx = dir.x, dy = dir.y, dz = dir.z;
+    float xx = dx*dx, yy = dy*dy, zz = dz*dz;
+    float xy = dx*dy, yz = dy*dz, xz = dz*dx;
+
+    float b[15];
+    b[0]  = -C1 * dy;
+    b[1]  =  C1 * dz;
+    b[2]  = -C1 * dx;
+    b[3]  =  C2_0 * xy;
+    b[4]  =  C2_1 * yz;
+    b[5]  =  C2_2 * (2.0*zz - xx - yy);
+    b[6]  =  C2_3 * xz;
+    b[7]  =  C2_4 * (xx - yy);
+    b[8]  =  C3_0 * dy * (3.0*xx - yy);
+    b[9]  =  C3_1 * xy * dz;
+    b[10] =  C3_2 * dy * (4.0*zz - xx - yy);
+    b[11] =  C3_3 * dz * (2.0*zz - 3.0*xx - 3.0*yy);
+    b[12] =  C3_4 * dx * (4.0*zz - xx - yy);
+    b[13] =  C3_5 * dz * (xx - yy);
+    b[14] =  C3_6 * dx * (xx - 3.0*yy);
+
+    vec3 dirColor = vec3(0,0,0);
+
+    for(int i = 0; i < 15; i++)
+    {
+        dirColor.r += b[i] * sh[i];
+        dirColor.g += b[i] * sh[i + 15];
+        dirColor.b += b[i] * sh[i + 30];
+    }
+
+    //vColor += dirColor;
     vColor = clamp(vColor, 0.0, 1.0);
 
-    
 
-    // varying
+    // out
     vOpacity =  1.0 / (1.0 + exp(-opacity));
     vInvCov = inverse(cov_2d);
     vPointSize = radius * 2.0; // gaussian bounding box

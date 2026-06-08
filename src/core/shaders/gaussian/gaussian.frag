@@ -1,9 +1,11 @@
 precision mediump float;
 
-varying vec3 vColor;
-varying float vOpacity;
-varying mat2 vInvCov;
-varying float vPointSize;
+in vec3 vColor;
+in float vOpacity;
+in mat2 vInvCov;
+in float vPointSize;
+
+out vec4 fragColor;
 
 void main() 
 {
@@ -12,5 +14,5 @@ void main()
     vec2 x = (gl_PointCoord - vec2(0.5)) * vPointSize;
     float g = exp(-0.5 * dot(x, vInvCov * x));
 
-    gl_FragColor = vec4(vColor, vOpacity * g);
+    fragColor = vec4(vColor, vOpacity * g);
 }

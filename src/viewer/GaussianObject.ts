@@ -54,12 +54,12 @@ export class GaussianObject
             depthWrite: false,
             depthTest: false,
             blending: THREE.NormalBlending,
+            glslVersion: THREE.GLSL3,
             uniforms: {
                 viewport: {
                     value: new THREE.Vector2(window.innerWidth, window.innerHeight)
                 }
             }
-            
         })
 
         // debug code
@@ -76,10 +76,34 @@ export class GaussianObject
 
         if(data.sh)
         {
-            geometry.setAttribute(
-                "sh",
-                new THREE.BufferAttribute(data.sh, 45)
+            const coefPerVertex = data.sh.length / data.count // sh수 = 45
+            const texelPerVertex = Math.ceil(coefPerVertex / 4) // 정점 1개당 필요한 텍셀 수 = 12 (4 channel RGBA Texture)
+
+            const width = 2048
+            const height = Math.ceil(data.count * texelPerVertex / width) // Vertex Number * 12 / 2048
+
+            const buffer = new Float32Array(width * height * 4)
+            for(let i = 0; i < data.count; i++)
+            {
+                const dst = i * texelPerVertex * 4
+                
+                for (let j = 0; j < coefPerVertex; j++)
+                {
+                    buffer[dst + j] = data.sh[i * coefPerVertex + j]
+                }
+            }
+
+            const shTex = new THREE.DataTexture(
+                buffer, width, height,
+                THREE.RGBAFormat, THREE.FloatType
             )
+
+            shTex.needsUpdate = true
+
+            material.uniforms.shTexture = { value : shTex }
+            material.uniforms.shWidth = { value : width }
+            material.uniforms.shTexels = { value : texelPerVertex }
+        
         }
         else
         {

@@ -45,6 +45,8 @@ export default function Viewer({data} : ViewerProps)
         camera.aspect = containerRef.current.clientWidth / containerRef.current.clientHeight
         camera.updateProjectionMatrix()
         camera.position.z = 7
+        camera.position.y = 2
+        
 
         gaussianObject.sortedByDepth(camera)
 
